@@ -11,6 +11,8 @@ class ViewController: UIViewController {
 
     @IBOutlet var subtitleLabel: UILabel!
     
+    @IBOutlet var nickNameTextField: UITextField!
+    
     @IBOutlet var heightTextField: UITextField!
     
     @IBOutlet var weightTextField: UITextField!
@@ -25,12 +27,51 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if let userName = UserDefaults.standard.string(forKey: "nickname") {
+            var subtext = userName == "" ? "당신" : "\(userName)님"
+            subtitleLabel.text = "\(subtext)의 BMI 지수를 알려드릴게요"
+            
+        }else{
+            subtitleLabel.text = "당신의 BMI 지수를 알려드릴게요"
+        }
+//        guard let userName = UserDefaults.standard.string(forKey: "nickname")else{
+//            subtitleLabel.text = "당신의 BMI 지수를 알려드릴게요"
+//            return
+//        }
+//        
         warningMessageLabel.text = ""
         let systemEyeImg = UIImage(systemName: "eye.slash")
         secureButton.setImage(systemEyeImg, for: .normal)
+        
+        let userNickName = UserDefaults.standard.string(forKey: "nickname")
+        let userWeight = UserDefaults.standard.integer(forKey: "weight")
+        let userHeight = UserDefaults.standard.integer(forKey: "height")
+      
+        guard let userNickName else{
+            return
+        }
+        
+        if userNickName != "" {
+            nickNameTextField.text = "\(userNickName)"
+        }else{
+            nickNameTextField.text = ""
+        }
+        
+        if userWeight != 0 && userHeight != 0 {
+            weightTextField.text = "\(userWeight)"
+            heightTextField.text = "\(userHeight)"
+        }else{
+            weightTextField.text = ""
+            heightTextField.text = ""
+        }
+           
     }
+//    let h = UserDefaults.standard.integer(forKey: "height")
+//    let t = UserDefaults.standard.integer(forKey: "weight")
+    
+    var info : [String: Int] = ["height": UserDefaults.standard.integer(forKey: "height"), "weight":UserDefaults.standard.integer(forKey: "weight")]
    
-    var info : [String: Int] = ["height":0, "weight":0]
     
     @IBAction func textFieldValidate(_ sender: UITextField) {
         
@@ -79,9 +120,8 @@ class ViewController: UIViewController {
     }
     
     @IBAction func showResultButton(_ sender: UIButton) {
-        
 //        let result = info["weight"] / info["height"]*(info["height"]
-        
+//        
         guard let weight = info["weight"], let height = info["height"] else {
             warningMessageLabel.text = "값을 입력해주세요"
             return
@@ -90,7 +130,7 @@ class ViewController: UIViewController {
         let doubleWeight:Double = Double(weight)
         let doubleHeight:Double = Double(height)/100
         
-        let Bmi = Float(doubleWeight / (doubleHeight * doubleHeight))
+        let bmi = Float(doubleWeight / (doubleHeight * doubleHeight))
         
         var message = ""
         
@@ -103,17 +143,30 @@ class ViewController: UIViewController {
 //        }else{
 //            message = "비만입니다"
 //        }
-        switch Bmi {
+        switch bmi {
         case ...18.5: message = "저체중입니다"
-        case 18.5..<23: message = "정상체중입니다"
+        case 18.5..<23: message = "정상입니다"
         case 23..<25: message = "과체중입니다"
         case 25...: message = "비만입니다"
         default: message = "오류입니다"
         }
         
-        let alert = UIAlertController(title: "BMI 결과는\(Bmi)으로", message: "\(message)", preferredStyle: .alert)
+        let alert = UIAlertController(title: "BMI 결과는\(String(format: "%.2f", bmi))으로 \(message)", message: "키와 몸무게를 저장하시겠습니까?", preferredStyle: .alert)
         
-        let confirmButton = UIAlertAction(title: "확인", style: .default)
+        guard let nickname = nickNameTextField.text else{
+            print("nickname을 입력하지 않았습니다")
+            return
+        }
+        
+        let confirmButton = UIAlertAction(title: "확인", style: .default) { _ in
+            
+            UserDefaults.standard.set( nickname, forKey: "nickname")
+            UserDefaults.standard.set( weight, forKey: "weight")
+            UserDefaults.standard.set( height, forKey: "height")
+            UserDefaults.standard.set( bmi, forKey: "bmi")
+            
+        }
+        
         let retryButton = UIAlertAction(title: "다시하기", style: .cancel)
         
         alert.addAction(confirmButton)
@@ -137,10 +190,10 @@ class ViewController: UIViewController {
        
         
         if weightVisible {
-            secureButton.setImage(EyeImg, for: .normal)
+            secureButton.setImage(slashEyeImg, for: .normal)
             weightTextField.isSecureTextEntry = true
         }else{
-            secureButton.setImage(slashEyeImg, for: .normal)
+            secureButton.setImage(EyeImg, for: .normal)
             weightTextField.isSecureTextEntry = false
         }
         weightVisible.toggle()
@@ -171,6 +224,16 @@ class ViewController: UIViewController {
         default:
             return
         }
+        
+    }
+    @IBAction func resetButtonClicked(_ sender: UIButton) {
+        nickNameTextField.text = ""
+        heightTextField.text = ""
+        weightTextField.text = ""
+        
+        UserDefaults.standard.set("", forKey: "nickname")
+        UserDefaults.standard.set(0, forKey: "weight")
+        UserDefaults.standard.set(0, forKey: "height")
         
     }
 }
